@@ -3,6 +3,9 @@ module Dino
     attr_reader :digital_hardware, :analog_hardware
     LOW, HIGH = 000, 255
 
+    LSBFIRST = 0
+    MSBFIRST = 1
+
     def initialize(io)
       @io, @digital_hardware, @analog_hardware = io, [], []
       io.add_observer(self)

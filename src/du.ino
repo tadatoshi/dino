@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include <SPI.h>
 
 bool debug = false;
 
@@ -41,6 +42,11 @@ void process() {
     val[2] = '\0';
     strncpy(aux, messageBuffer + 6, 3);
     aux[3] = '\0';
+  } else if (atoi(cmd) < 90 && atoi(cmd) > 80) {
+    strncpy(val, messageBuffer + 2, 2);
+    val[2] = '\0';
+    strncpy(aux, messageBuffer + 4, 3);
+    aux[4] = '\0';    
   } else {
     strncpy(val, messageBuffer + 4, 3);
     val[4] = '\0';
@@ -64,6 +70,7 @@ void process() {
     case 2:  dr(pin,val);              break;
     case 3:  aw(pin,val);              break;
     case 4:  ar(pin,val);              break;
+    case 81: handleSpi(val,aux);       break;
     case 97: handlePing(pin,val,aux);  break;
     case 98: handleServo(pin,val,aux); break;
     case 99: toggleDebug(val);         break;
@@ -247,5 +254,84 @@ void handleServo(char *pin, char *val, char *aux) {
     char m[13];
     sprintf(m, "%s::read::%03d", pin, sval);
     Serial.println(m);
+  }
+}
+
+/*
+ * Handle SPI commands
+ * begin, end, setBitOrder, setClockDivider, setDataMode, transfer
+ */
+void handleSpi(char *val, char *aux) {
+  if (debug) Serial.println("spi");
+  Serial.println("signal: spi");
+
+  // 00(0) Begin
+  if (atoi(val) == 0) {
+    SPI.begin();
+    char m[12];
+    sprintf(m, "SPI started");
+    Serial.println(m);
+
+  // 01(1) End
+  } else if (atoi(val) == 1) {
+    SPI.end();
+    char m[12];
+    sprintf(m, "SPI ended");
+    Serial.println(m);
+
+  // 02(2) setBitOrder
+  } else if (atoi(val) == 2) {
+    int bit_order_identifier = atoi(aux);
+    int bit_order;
+    switch(bit_order_identifier) {
+      case 0: bit_order = LSBFIRST; break;
+      case 1: bit_order = MSBFIRST; break;
+    }
+    SPI.setBitOrder(bit_order);
+    char m[12];
+    sprintf(m, "Bit order is set to %s", aux);
+    Serial.println(m);
+
+  // 03(3) setClockDivider
+  } else if (atoi(val) == 3) {
+    int clock_divider_identifier = atoi(aux);
+    int clock_divider;
+    switch(clock_divider_identifier) {
+      case 2:   clock_divider = SPI_CLOCK_DIV2;   break;
+      case 4:   clock_divider = SPI_CLOCK_DIV4;   break;
+      case 8:   clock_divider = SPI_CLOCK_DIV8;   break;
+      case 16:  clock_divider = SPI_CLOCK_DIV16;  break;
+      case 32:  clock_divider = SPI_CLOCK_DIV32;  break;
+      case 64:  clock_divider = SPI_CLOCK_DIV64;  break;
+      case 128: clock_divider = SPI_CLOCK_DIV128; break;
+      default:  clock_divider = SPI_CLOCK_DIV4;   break;                  
+    }  
+    SPI.setClockDivider(clock_divider);
+    char m[12];
+    sprintf(m, "Clock divider is set to %s", aux);
+    Serial.println(m);
+
+  // 04(4) setDataMode
+  } else if (atoi(val) == 4) {
+    int data_mode_identifier = atoi(aux);
+    int data_mode;
+    switch(data_mode_identifier) {
+      case 0: data_mode = SPI_MODE0; break;
+      case 1: data_mode = SPI_MODE1; break;
+      case 2: data_mode = SPI_MODE2; break;
+      case 3: data_mode = SPI_MODE3; break;                
+    }   
+    SPI.setDataMode(data_mode);
+    char m[12];
+    sprintf(m, "Data mode is set to %s", aux);
+    Serial.println(m);
+
+  // 05(5) transfer
+  } else if (atoi(val) == 5) {
+    SPI.transfer(aux);
+    char m[12];
+    sprintf(m, "%s is sent to SPI bus", aux);
+    Serial.println(m);
+
   }
 }

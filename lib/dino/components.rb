@@ -8,5 +8,6 @@ module Dino
     autoload :Servo,      'dino/components/servo'
     autoload :Stepper,    'dino/components/stepper'
     autoload :IrReceiver, 'dino/components/ir_receiver'
+    autoload :Spi,        'dino/components/spi'
   end
 end
